@@ -1,59 +1,86 @@
 import math
 
-def calculate_loan_payment(interest, term, present_value):
+def calculate_loan_payment(present_value: float, annual_interest_rate: float, term_years: int) -> float:
     """
-    Calculates the monthly loan payment using the standard loan payment formula.
+    Calculates the fixed monthly payment for a loan.
 
     Args:
-        interest (float): The annual interest rate (e.g., 0.05 for 5%).
-        term (int): The term of the loan in years.
-        present_value (float): The principal loan amount (present value).
+        present_value (float): The principal loan amount (P).
+        annual_interest_rate (float): The annual interest rate (e.g., 0.05 for 5%).
+        term_years (int): The loan term in years.
 
     Returns:
-        float: The monthly loan payment. Returns float('inf') for invalid inputs
-               where a non-zero loan would have an undefined or infinite payment
-               (e.g., zero term for non-zero present value).
-               Returns 0.0 if present_value is 0 or term is <=0 and present_value is 0.
+        float: The calculated monthly loan payment.
+               Returns 0.0 if the term_years is 0, as there's no payment period.
     """
-    if present_value < 0:
-        # A loan amount (present value) is typically non-negative.
-        # If it were negative, the payment would also be negative (money paid to borrower).
-        # We will proceed with the calculation, but semantically, a negative PV is unusual for a loan payment.
-        pass
+    if term_years <= 0:
+        return 0.0
 
-    if term <= 0:
-        if present_value == 0:
-            return 0.0  # No loan, no payment
-        else:
-            # Cannot pay back a non-zero loan in zero or negative time.
-            # This implies an infinite payment.
-            return float('inf')
+    # Assume monthly payments
+    payments_per_year = 12
+    
+    # Calculate periodic interest rate
+    # If annual_interest_rate is 0, avoid division by zero in the formula's denominator
+    if annual_interest_rate == 0:
+        # In this case, the payment is simply the principal divided by the total number of payments
+        total_payments = term_years * payments_per_year
+        if total_payments == 0:
+            return 0.0
+        return present_value / total_payments
+    
+    periodic_interest_rate = annual_interest_rate / payments_per_year
+    
+    # Calculate total number of payments
+    total_payments = term_years * payments_per_year
+    
+    # Calculate the payment using the loan payment formula (PMT)
+    # PMT = [P * r * (1 + r)^n] / [(1 + r)^n – 1]
+    numerator = periodic_interest_rate * math.pow(1 + periodic_interest_rate, total_payments)
+    denominator = math.pow(1 + periodic_interest_rate, total_payments) - 1
+    
+    payment = present_value * (numerator / denominator)
+    
+    return payment
 
-    # Convert annual interest rate to a monthly rate
-    monthly_interest_rate = interest / 12
+if __name__ == '__main__':
+    # Example Usage:
+    # Loan for $100,000 at 5% annual interest over 30 years
+    loan_amount = 100000
+    annual_rate = 0.05
+    loan_term = 30
+    
+    monthly_payment = calculate_loan_payment(loan_amount, annual_rate, loan_term)
+    print(f"Loan Amount: ${loan_amount:,.2f}")
+    print(f"Annual Interest Rate: {annual_rate * 100:.2f}%")
+    print(f"Loan Term: {loan_term} years")
+    print(f"Monthly Payment: ${monthly_payment:,.2f}") # Expected: $536.82
 
-    # Calculate the total number of payments
-    number_of_payments = term * 12
+    # Example with different values
+    loan_amount_2 = 25000
+    annual_rate_2 = 0.035
+    loan_term_2 = 5
+    monthly_payment_2 = calculate_loan_payment(loan_amount_2, annual_rate_2, loan_term_2)
+    print(f"\nLoan Amount: ${loan_amount_2:,.2f}")
+    print(f"Annual Interest Rate: {annual_rate_2 * 100:.2f}%")
+    print(f"Loan Term: {loan_term_2} years")
+    print(f"Monthly Payment: ${monthly_payment_2:,.2f}") # Expected: $454.73
 
-    if monthly_interest_rate == 0:
-        # Special case for zero interest: simple division of principal by total number of payments
-        return present_value / number_of_payments
-    else:
-        # Standard loan payment formula: M = P [ r(1 + r)^n ] / [ (1 + r)^n – 1]
-        # P = present_value
-        # r = monthly_interest_rate
-        # n = number_of_payments
+    # Example with zero interest rate
+    loan_amount_3 = 12000
+    annual_rate_3 = 0.00
+    loan_term_3 = 10
+    monthly_payment_3 = calculate_loan_payment(loan_amount_3, annual_rate_3, loan_term_3)
+    print(f"\nLoan Amount: ${loan_amount_3:,.2f}")
+    print(f"Annual Interest Rate: {annual_rate_3 * 100:.2f}%")
+    print(f"Loan Term: {loan_term_3} years")
+    print(f"Monthly Payment: ${monthly_payment_3:,.2f}") # Expected: $100.00 (12000 / (10 * 12))
 
-        # Calculate (1 + r)^n
-        pow_val = (1 + monthly_interest_rate)**number_of_payments
-
-        numerator = monthly_interest_rate * pow_val
-        denominator = pow_val - 1
-        
-        # Guard against potential floating point inaccuracies if denominator becomes extremely small
-        # (this would happen if monthly_interest_rate is very close to zero but not exactly zero)
-        if abs(denominator) < 1e-9: # A small threshold to consider it effectively zero
-            return present_value / number_of_payments
-
-        monthly_payment = present_value * (numerator / denominator)
-        return monthly_payment
+    # Example with zero term
+    loan_amount_4 = 5000
+    annual_rate_4 = 0.04
+    loan_term_4 = 0
+    monthly_payment_4 = calculate_loan_payment(loan_amount_4, annual_rate_4, loan_term_4)
+    print(f"\nLoan Amount: ${loan_amount_4:,.2f}")
+    print(f"Annual Interest Rate: {annual_rate_4 * 100:.2f}%")
+    print(f"Loan Term: {loan_term_4} years")
+    print(f"Monthly Payment: ${monthly_payment_4:,.2f}") # Expected: $0.00

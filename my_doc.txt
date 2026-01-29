@@ -1,0 +1,8 @@
+This document is created for OIM3641 In-class Activity 3.
+It is used to test LlamaCloud indexing and retrieval.
+
+The document talks about my hometown Hangzhou.
+Hangzhou is a city in China.
+Hangzhou is famous for West Lake.
+
+This document does not contain any information about the weather in Boston.
