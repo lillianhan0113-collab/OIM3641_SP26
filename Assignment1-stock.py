@@ -12,7 +12,6 @@ class Stock:
         self.data = None
 
     def get_data(self):
-
         if self.end_date is None:
             self.end_date = datetime.today().strftime('%Y-%m-%d')
 
@@ -30,7 +29,6 @@ class Stock:
 
         df.index = pd.to_datetime(df.index)
         self.data = df
-
         self.calc_returns()
 
     def calc_returns(self):
