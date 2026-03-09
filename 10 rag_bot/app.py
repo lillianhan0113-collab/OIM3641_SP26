@@ -1,14 +1,15 @@
 import os
 from pathlib import Path
+from typing import List
 
 import streamlit as st
 from dotenv import load_dotenv
 
-load_dotenv()
-
 from llama_index.core import Settings, SimpleDirectoryReader, VectorStoreIndex
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.google_genai import GoogleGenAI
+
+load_dotenv()
 
 
 # Helper functions
@@ -19,8 +20,7 @@ def fail(msg: str):
 
 
 def get_api_key() -> str:
-    """Load and validate API key (preventative if/raise style)."""
-    load_dotenv()
+    """Validate API key."""
     api_key = os.getenv("GOOGLE_API_KEY", "").strip()
     if not api_key:
         fail("Missing GOOGLE_API_KEY in .env (Fix: add GOOGLE_API_KEY=... to your .env file)")
@@ -28,7 +28,7 @@ def get_api_key() -> str:
 
 
 def validate_data_dir(data_dir: str) -> Path:
-    """#2 Test for a data directory"""
+    """Test whether the data directory exists and is a folder."""
     p = Path(data_dir)
     if not p.exists():
         fail(f"Data directory not found: '{data_dir}'. (Fix: create a folder named '{data_dir}' and add files)")
@@ -37,8 +37,8 @@ def validate_data_dir(data_dir: str) -> Path:
     return p
 
 
-def validate_has_files(data_path: Path) -> list[Path]:
-    """#4 Test to make sure there are file(s) in the directory""" #new
+def validate_has_files(data_path: Path) -> List[Path]:
+    """Test whether the data directory contains supported files."""
     allowed = {".pdf", ".txt", ".md"}
     files = [x for x in data_path.iterdir() if x.is_file() and x.suffix.lower() in allowed]
 
@@ -47,14 +47,19 @@ def validate_has_files(data_path: Path) -> list[Path]:
     return files
 
 
-# ---------- Cache heavy initialization ----------
+def dir_fingerprint(data_path: Path) -> str:
+    """Create a fingerprint from filenames, modified times, and sizes."""
+    files = sorted([p for p in data_path.iterdir() if p.is_file()])
+    stamp = [(p.name, p.stat().st_mtime_ns, p.stat().st_size) for p in files]
+    return str(stamp)
+
+
 @st.cache_resource(show_spinner="Building index (cached)...")
 def build_query_engine(data_dir: str, api_key: str, fingerprint: str):
     """
-    #3 Cache the data/index with Streamlit to reduce latency
-    This is cached so Streamlit reruns won't rebuild the index every time.
+    Cache the RAG engine so Streamlit reruns do not rebuild the index every time.
+    The fingerprint forces a rebuild when files in the directory change.
     """
-    # RAG engine init can fail → let caller handle via try/except (runtime protection)
     Settings.llm = GoogleGenAI(
         model="gemini-2.5-flash",
         api_key=api_key,
@@ -68,6 +73,7 @@ def build_query_engine(data_dir: str, api_key: str, fingerprint: str):
         data_dir,
         required_exts=[".pdf", ".txt", ".md"]
     ).load_data()
+
     index = VectorStoreIndex.from_documents(docs)
     return index.as_query_engine(similarity_top_k=5)
 
@@ -75,20 +81,12 @@ def build_query_engine(data_dir: str, api_key: str, fingerprint: str):
 def main():
     st.title("Babson Handbook RAG Chatbot")
 
-    # --- #1 API key validation ---
     api_key = get_api_key()
 
-    # --- #2 and #4 directory + file checks ---
     data_dir = "data"
     data_path = validate_data_dir(data_dir)
     _files = validate_has_files(data_path)
 
-    def dir_fingerprint(data_path: Path) -> str:
-        files = sorted([p for p in data_path.iterdir() if p.is_file()])
-        stamp = [(p.name, p.stat().st_mtime_ns, p.stat().st_size) for p in files]
-        return str(stamp)
-
-    # --- #5 Wrap RAG engine init in try/except (fast fail) ---
     try:
         fingerprint = dir_fingerprint(data_path)
         query_engine = build_query_engine(data_dir, api_key, fingerprint)
@@ -102,7 +100,6 @@ def main():
     user_input = st.chat_input("Ask a handbook question")
 
     if user_input:
-        # --- #5 Wrap query in try/except (graceful runtime handling) ---
         try:
             with st.spinner("Thinking..."):
                 response = query_engine.query(user_input)
