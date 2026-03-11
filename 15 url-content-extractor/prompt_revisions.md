@@ -31,10 +31,12 @@ My application's authentication system is failing and users cannot log in.
 Please help identify possible causes and suggest debugging steps.
 
 
-Prompt 4
+# Prompt 4
 
 Original Prompt:
 I need to migrate to a new database
 
 Revised Prompt:
-I need to migrate my application from one database to another. Please explain how to migrate the schema, transfer the data safely, and verify the migration.
+I need to migrate my application from one database to another. 
+Please explain how to migrate the schema, transfer the data safely, 
+and verify the migration.
