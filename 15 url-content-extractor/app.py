@@ -2,6 +2,7 @@ import requests
 import streamlit as st
 from bs4 import BeautifulSoup
 
+
 st.title("URL Content Extractor")
 url = st.text_input("Enter a URL")
 

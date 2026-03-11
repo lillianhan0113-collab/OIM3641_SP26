@@ -1,4 +1,4 @@
-# Prompt 1
+# Prompt 1 
 
 Original Prompt:
 My app is broken
@@ -10,7 +10,7 @@ and suggest fixes with explanations.
 
 
 
-# Prompt 2
+# Prompt 2 
 
 Original Prompt:
 I need to parse a dataset
@@ -21,7 +21,7 @@ Please load the dataset, handle missing values, and explain each step clearly.
 
 
 
-# Prompt 3
+# Prompt 3 
 
 Original Prompt:
 Authentication isn’t working
