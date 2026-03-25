@@ -40,7 +40,7 @@ print("--- Extracted code ---")
 print(code_content)
 
 # Save extracted code into a new file
-with open("loan_calc.py", "w", encoding="utf-8") as f:
+with open("../loan_calc.py", "w", encoding="utf-8") as f:
     f.write(code_content)
 
 
